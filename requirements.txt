@@ -1,0 +1,3 @@
+# runtime deps are system tools: bash, jq, sqlite3, flock (util-linux)
+# python deps are only for the schema-validation step of the test suite:
+jsonschema>=4.0

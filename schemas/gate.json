@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Victhors/llm-conductor/schemas/gate.json",
+  "title": "stage gate",
+  "description": "The small structured artifact the LLM-conductor reads to decide the next move. Deliberately minimal to keep token cost low.",
+  "type": "object",
+  "required": ["schema_version", "stage", "run_id", "result"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" },
+    "stage": { "type": "string" },
+    "run_id": { "type": "string" },
+    "result": { "enum": ["pass", "warn", "fail"] },
+    "ended_at": { "type": "string", "format": "date-time" },
+    "duration_seconds": { "type": "number", "minimum": 0 },
+    "next_recommended": { "type": ["string", "null"] },
+    "stats": { "type": "object" },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "msg"],
+        "properties": { "code": { "type": "string" }, "msg": { "type": "string" } }
+      }
+    },
+    "inspect_hints": { "type": "array", "items": { "type": "string" } }
+  }
+}

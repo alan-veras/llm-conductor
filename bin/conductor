@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# llm-conductor — a deterministic, schema-validated pipeline an LLM drives via a
+# tiny CLI + JSON gates. The model spends tokens on decisions, not parsing.
+set -euo pipefail
+
+CONDUCTOR_ROOT="${CONDUCTOR_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+export CONDUCTOR_ROOT
+source "$CONDUCTOR_ROOT/engine/common.sh"
+source "$CONDUCTOR_ROOT/engine/state.sh"
+source "$CONDUCTOR_ROOT/engine/gate.sh"
+source "$CONDUCTOR_ROOT/engine/db.sh"
+source "$CONDUCTOR_ROOT/stages/pipeline.sh"
+
+need_cmd jq; need_cmd sqlite3; need_cmd flock
+
+usage() {
+  cat <<'EOF'
+llm-conductor — LLM-conductor-friendly pipeline engine
+
+  conductor init <run-id> [--goal "<text>"]      create a run, set it current
+  conductor status [<run-id>] [--json]           run state (validates schema)
+  conductor run <stage|all> [<run-id>]           execute stage(s); stops on warn/fail
+  conductor inspect <stage> [<run-id>] [--jq E]  surgical slice of a stage gate
+  conductor proceed [<run-id>]                   advance after gate=pass
+  conductor override <stage> --patch '<json>' [<run-id>]   conductor injects a fix
+  conductor abort [<run-id>] --reason "<text>"   mark run aborted
+  conductor list                                 list runs
+  conductor metrics                              cross-run stage stats (SQLite)
+EOF
+}
+
+cmd_init() {
+  local run="$1"; shift; local goal=""
+  while [[ $# -gt 0 ]]; do case "$1" in --goal) goal="$2"; shift 2;; *) shift;; esac; done
+  state_init "$run" "$goal"
+  mkdir -p "$RUNS_DIR"; printf '%s' "$run" > "$(current_run_path)"
+  echo "initialized run '$run' (now current)"
+}
+
+cmd_status() {
+  local json=0 run=""
+  while [[ $# -gt 0 ]]; do case "$1" in --json) json=1; shift;; *) run="$1"; shift;; esac; done
+  run="$(resolve_run "$run")"
+  local m; m="$(state_read "$run")"
+  local sv; sv="$(jq -r '.schema_version' <<<"$m")"
+  [[ "$sv" == "$SCHEMA_VERSION" ]] || echo "warning: schema_version $sv != $SCHEMA_VERSION" >&2
+  if (( json )); then echo "$m"; else
+    jq -r '"run: \(.run_id)  tokens~\(.tokens_consumed_estimate)\nstages:",
+           (.stages|to_entries[]|"  \(.key): \(.value.status)\(if .value.gate then " ["+.value.gate+"]" else "" end)")' <<<"$m"
+  fi
+}
+
+cmd_run() {
+  local what="$1"; shift || true; local run; run="$(resolve_run "${1:-}")"
+  if [[ "$what" == "all" ]]; then
+    local s
+    while s="$(state_next_stage "$run")"; [[ -n "$s" ]]; do
+      stage_exec "$run" "$s" || { echo "stage $s failed"; return 1; }
+      local res; res="$(gate_result "$run" "$s")"
+      echo "ran $s -> $res"
+      [[ "$res" == "pass" ]] || { echo "gate=$res on '$s' — stopping for conductor decision"; return 0; }
+    done
+    echo "pipeline complete"
+  else
+    stage_exec "$run" "$what"
+    echo "ran $what -> $(gate_result "$run" "$what")"
+  fi
+}
+
+cmd_inspect() {
+  local stage="$1"; shift; local run="" expr="."
+  while [[ $# -gt 0 ]]; do case "$1" in --jq) expr="$2"; shift 2;; *) run="$1"; shift;; esac; done
+  run="$(resolve_run "$run")"
+  gate_read "$run" "$stage" | jq "$expr"
+}
+
+cmd_proceed() {
+  local run; run="$(resolve_run "${1:-}")"
+  local s; s="$(state_next_stage "$run")"
+  [[ -z "$s" ]] && { echo "pipeline already complete"; return 0; }
+  local prev_idx=0 prev=""
+  for st in "${STAGES_ORDERED[@]}"; do [[ "$st" == "$s" ]] && break; prev="$st"; done
+  if [[ -n "$prev" ]]; then
+    local pr; pr="$(gate_result "$run" "$prev")"
+    [[ "$pr" == "pass" ]] || { echo "previous stage '$prev' gate=$pr; resolve before proceed" >&2; return 1; }
+  fi
+  state_decision_append "$run" "$s" llm-conductor proceed "advancing after gate=pass"
+  stage_exec "$run" "$s"; echo "proceeded to $s -> $(gate_result "$run" "$s")"
+}
+
+cmd_override() {
+  local stage="$1"; shift; local patch="{}" run=""
+  while [[ $# -gt 0 ]]; do case "$1" in --patch) patch="$2"; shift 2;; *) run="$1"; shift;; esac; done
+  run="$(resolve_run "$run")"
+  state_update "$run" ".stages[\$s] += \$p | .updated_at=\$now" \
+    --arg s "$stage" --argjson p "$patch" --arg now "$(iso8601)"
+  state_decision_append "$run" "$stage" llm-conductor override "patch: $patch"
+  echo "override applied to $stage"
+}
+
+cmd_abort() {
+  local run="" reason=""
+  while [[ $# -gt 0 ]]; do case "$1" in --reason) reason="$2"; shift 2;; *) run="$1"; shift;; esac; done
+  run="$(resolve_run "$run")"
+  state_update "$run" '.active=false | .updated_at=$now' --arg now "$(iso8601)"
+  state_decision_append "$run" "-" llm-conductor abort "$reason"
+  echo "run '$run' aborted: $reason"
+}
+
+cmd_list() {
+  [[ -d "$RUNS_DIR" ]] || { echo "no runs"; return; }
+  for m in "$RUNS_DIR"/*/manifest.json; do
+    [[ -f "$m" ]] || continue
+    jq -r '"\(.run_id)\t\(if .active then "active" else "closed" end)\ttokens~\(.tokens_consumed_estimate)"' "$m"
+  done
+}
+
+cmd_metrics() { db_stage_stats | jq .; }
+
+main() {
+  [[ $# -eq 0 ]] && { usage; exit 0; }
+  local cmd="$1"; shift
+  case "$cmd" in
+    init) cmd_init "$@";;        status) cmd_status "$@";;   run) cmd_run "$@";;
+    inspect) cmd_inspect "$@";;  proceed) cmd_proceed "$@";; override) cmd_override "$@";;
+    abort) cmd_abort "$@";;      list) cmd_list "$@";;       metrics) cmd_metrics "$@";;
+    -h|--help|help) usage;;
+    *) echo "unknown command: $cmd" >&2; usage; exit 1;;
+  esac
+}
+main "$@"

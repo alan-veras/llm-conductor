@@ -1,0 +1,5 @@
+Large language models behave like very capable interns who never sleep. They are fast, broad, and confident. But confidence is not correctness, and an intern with production access is a risk as much as an asset.
+
+The discipline that makes them safe is the same discipline that makes any junior contributor safe. Give them a narrow scope. Make every action reviewable. Keep a human in the loop for anything irreversible. Log everything so a mistake can be traced and undone.
+
+A pipeline encodes that discipline in software. Each stage does one thing, writes a small structured result, and stops at a gate. A reviewer — human or model — reads the gate and decides whether to proceed. Nothing advances on its own. The cost of a wrong step is one stage, not the whole run.

@@ -1,0 +1,7 @@
+runs/
+runs_test/
+*.db
+*.db-wal
+*.db-shm
+__pycache__/
+.DS_Store
