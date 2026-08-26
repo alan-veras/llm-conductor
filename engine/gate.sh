@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# llm-conductor — gate.json protocol.
+# llm-conductor, gate.json protocol.
 # A gate is the small, structured artifact the LLM-conductor reads to decide the
 # next move. Keep it tiny: the conductor spends tokens on decisions, not parsing.
 # shellcheck shell=bash

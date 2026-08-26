@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# llm-conductor — manifest state machine.
+# llm-conductor, manifest state machine.
 # The manifest is the single source of truth; everything else is derived.
 # Writes are atomic: flock the lockfile, jq into a tmp file, mv into place.
 # shellcheck shell=bash

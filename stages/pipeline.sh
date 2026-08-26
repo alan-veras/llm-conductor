@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Example pipeline: turn a text document into a reviewed summary report.
-# Entirely benign and offline — it exists to exercise the engine, not to do
+# Entirely benign and offline, it exists to exercise the engine, not to do
 # anything domain-specific. Swap these functions for your real stages.
 # shellcheck shell=bash
 
@@ -49,7 +49,7 @@ stage_summarize() {
   awk 'BEGIN{RS="";FS="\n"}{ s=$0; sub(/\..*/,".",s); print s }' "$w/raw.txt" >"$w/summary.txt"
   local sw; sw=$(wc -w <"$w/summary.txt")
   # account for the token cost of the model call (instrumentation the engine
-  # uses to keep a budget — here an estimate).
+  # uses to keep a budget, here an estimate).
   state_add_tokens "$run" $(( sw * 3 ))
   gate_write "$run" summarize pass "$(jq -n --argjson sw "$sw" '{summary_words:$sw}')" review
 }

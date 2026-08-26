@@ -48,7 +48,7 @@ PY
   if validate schemas/manifest.json "$RUNS_DIR/t1/manifest.json"; then ok "manifest matches schema"; else bad "manifest schema"; fi
   if validate schemas/gate.json "$RUNS_DIR/t1/analyze/gate.json"; then ok "gate matches schema"; else bad "gate schema"; fi
 else
-  echo "  (jsonschema not installed — jq structural fallback)"
+  echo "  (jsonschema not installed, jq structural fallback)"
   if jq -e '.run_id and .stages' "$RUNS_DIR/t1/manifest.json" >/dev/null; then ok "manifest has run_id+stages"; else bad "manifest structure"; fi
   if jq -e '.result and .stats' "$RUNS_DIR/t1/analyze/gate.json" >/dev/null; then ok "gate has result+stats"; else bad "gate structure"; fi
 fi

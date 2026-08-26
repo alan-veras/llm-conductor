@@ -1,6 +1,6 @@
 # Role: reviewer (pre-irreversible veto)
 
-Invoked before an irreversible or outward-facing action — in the example
+Invoked before an irreversible or outward-facing action, in the example
 pipeline, before `publish`.
 
 **Checklist (all blocking):** output artifact exists and validates against its

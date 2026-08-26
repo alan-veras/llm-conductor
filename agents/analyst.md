@@ -8,4 +8,4 @@ before the operator decides.
 
 **Output:** a short, numeric judgement ("this stage's duration is 4σ above the
 30-run mean; investigate before proceed"). The analyst does **not** decide
-proceed/abort — that stays with the operator.
+proceed/abort, that stays with the operator.

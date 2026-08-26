@@ -54,13 +54,13 @@ A stage ends with one of three results:
 | `warn` | completed, but a signal merits inspection | read `warnings`, then proceed or `override` |
 | `fail` | criterion not met | `abort`, or `override` and retry |
 
-`run all` walks the stages and **stops the moment a gate is not `pass`** — that
+`run all` walks the stages and **stops the moment a gate is not `pass`**, that
 stop is the conductor's decision point. (Try it: feed a 2-word document and watch
 `analyze` warn and the run halt.)
 
 ## Token economy: `inspect --jq`
 
-A full gate is ~300–600 bytes. In a loop that adds up, so the conductor never
+A full gate is ~300-600 bytes. In a loop that adds up, so the conductor never
 reads the whole thing when it knows the field it wants:
 
 ```bash
@@ -70,7 +70,7 @@ conductor inspect analyze --jq '.warnings[].msg'
 
 In the parent project this single discipline (plus collapsing 9 spawned agents
 into one conductor + two on-demand roles) cut an end-to-end run from an estimated
-~315k tokens to under ~50k — roughly **-84%**. The numbers are specific to that
+~315k tokens to under ~50k, roughly **-84%**. The numbers are specific to that
 workload, but the lever is general: *don't pay tokens to re-parse state you can
 slice.*
 
@@ -78,38 +78,38 @@ slice.*
 
 Two stores, split by access pattern:
 
-- **JSON + `flock`** for `manifest.json` and `gate.json` — document-shaped,
+- **JSON + `flock`** for `manifest.json` and `gate.json`, document-shaped,
   edited rarely, read by humans, diff-friendly in git. Writes are atomic:
   lock → `jq` into a temp file → `mv` into place.
-- **SQLite (WAL)** for cross-run metrics (`runs/_metrics.db`) — tabular,
+- **SQLite (WAL)** for cross-run metrics (`runs/_metrics.db`), tabular,
   append-heavy, queried with aggregates ("average duration per stage across all
   runs"). Answering that from N per-run JSON files is a linear scan; an indexed
   query is O(log n).
 
 The rule of thumb: **JSON for state you read one run at a time; SQLite for
-questions that span runs.** Scripts never touch a store directly — they go
+questions that span runs.** Scripts never touch a store directly, they go
 through `engine/state.sh`, `engine/gate.sh`, `engine/db.sh`, so the storage choice
 can change without touching stage code.
 
 ## Schema versioning
 
 `schema_version` is `MAJOR.MINOR`. Additive changes (a new optional field) bump
-MINOR and are applied as defaults on read — no migrator. Renames, removals and
+MINOR and are applied as defaults on read, no migrator. Renames, removals and
 semantic breaks bump MAJOR and require a migrator. SQLite tracks `PRAGMA
-user_version`. Consumers accept `manifest.schema_version <= code.expected` —
+user_version`. Consumers accept `manifest.schema_version <= code.expected`, 
 strict forward-compatibility. Version validation runs only at `init`/`status`, so
 the conductor pays zero extra tokens for it mid-run.
 
 ## The three roles
 
 The pipeline replaces what used to be many specialized agents. Only three roles
-remain, and two are on-demand — see [`../agents/`](../agents/):
+remain, and two are on-demand, see [`../agents/`](../agents/):
 
-- **operator** — drives the console; reads gates; issues proceed/override/abort.
+- **operator**, drives the console; reads gates; issues proceed/override/abort.
   Handles the overwhelming majority of steps.
-- **analyst** — invoked only for an ambiguous `warn`, to give a quantitative read
+- **analyst**, invoked only for an ambiguous `warn`, to give a quantitative read
   before a decision.
-- **reviewer** — a final veto before an irreversible action (here: `publish`).
+- **reviewer**, a final veto before an irreversible action (here: `publish`).
 
 This is the human-in-the-loop / least-privilege idea applied to agents: narrow
 scope per role, every action reviewable, nothing irreversible without a gate.

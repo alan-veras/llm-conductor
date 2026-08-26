@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# llm-conductor — cross-run metrics in SQLite (WAL).
+# llm-conductor, cross-run metrics in SQLite (WAL).
 # Doc-oriented state lives in JSON (manifest/gate: edited rarely, diff-friendly,
 # human-readable). Tabular cross-run metrics live here, where an indexed query
 # beats scanning N JSON files. Same hybrid-storage split as the original system.
@@ -33,7 +33,7 @@ db_record() {
      VALUES('$(iso8601)','$run','$stage','$result',$dur,$tokens);"
 }
 
-# avg duration per stage across all runs — the kind of question JSON-per-run
+# avg duration per stage across all runs, the kind of question JSON-per-run
 # can't answer cheaply.
 db_stage_stats() {
   db_init

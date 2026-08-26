@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# llm-conductor — shared helpers
+# llm-conductor, shared helpers
 # shellcheck shell=bash
 
 : "${CONDUCTOR_ROOT:?CONDUCTOR_ROOT must be set}"
@@ -7,7 +7,7 @@ RUNS_DIR="${RUNS_DIR:-$CONDUCTOR_ROOT/runs}"
 SCHEMA_VERSION="1.0"
 
 # Ordered stages of the example pipeline. A real deployment swaps this list and
-# the matching scripts in stages/ — the engine is domain-agnostic.
+# the matching scripts in stages/, the engine is domain-agnostic.
 STAGES_ORDERED=(fetch extract analyze summarize review publish)
 
 need_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "missing dependency: $1" >&2; exit 1; }; }
