@@ -85,7 +85,7 @@ TAREFAS:
    ressalva? Algum número inventado ou arredondado além do documentado? Marque OK/NOK.
 3. Recomende a vencedora com justificativa (conversão, clareza, honestidade, amplitude
    em relação aos posts anteriores da série).
-4. Salve tudo em docs/post-draft.md com o checklist §5 marcado item a item.
+4. Salve as variantes em ../posts/llm-conductor/draft-a.md, draft-b.md e draft-c.md (corpo do post, separador ---, primeiro comentário) e marque o checklist §5 item a item na recomendada.
 5. Sugira 2 melhorias concretas na vencedora.
 
 REGRAS: nada fora da matéria-prima §2; a ressalva do -84% NUNCA pode ser cortada;
@@ -98,8 +98,8 @@ pessoa/diálogo real no bloco 1. NÃO publique nada, só gerar arquivos locais.
 Rodar numa sessão nova depois do rascunho pronto. Não edita nada, só julga.
 
 ```
-CONTEXTO: análise ADVERSARIAL do rascunho em docs/post-draft.md do repo llm-conductor.
-Leia o rascunho, README.md, docs/architecture.md e docs/POST-PLAN.md.
+CONTEXTO: análise ADVERSARIAL do rascunho nas variantes ../posts/llm-conductor/draft-a.md, draft-b.md e draft-c.md do repo llm-conductor.
+Leia as variantes, README.md, docs/architecture.md e docs/POST-PLAN.md.
 Você é revisor hostil triplo: usuário cético de LinkedIn, arquiteto de sistemas cético
 (já viu 100 projetos de agent framework prometerem demais), hiring manager técnico de 45s.
 NÃO edite nada.
