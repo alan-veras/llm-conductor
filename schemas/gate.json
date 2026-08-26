@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Victhors/llm-conductor/schemas/gate.json",
+  "$id": "https://github.com/alan-veras/llm-conductor/schemas/gate.json",
   "title": "stage gate",
   "description": "The small structured artifact the LLM-conductor reads to decide the next move. Deliberately minimal to keep token cost low.",
   "type": "object",

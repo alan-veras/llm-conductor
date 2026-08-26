@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Victhors/llm-conductor/schemas/manifest.json",
+  "$id": "https://github.com/alan-veras/llm-conductor/schemas/manifest.json",
   "title": "conductor run manifest",
   "description": "Single source of truth for a pipeline run. Versioned MAJOR.MINOR; additive changes bump MINOR and apply defaults on read, breaking changes bump MAJOR and require a migrator.",
   "type": "object",
